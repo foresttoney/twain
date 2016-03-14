@@ -27,6 +27,9 @@ defmodule Twain.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    []
+    [
+      {:hound, "~> 0.8.2"},
+      {:httpoison, "~> 0.8.1"}
+    ]
   end
 end
