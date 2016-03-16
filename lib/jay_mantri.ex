@@ -10,11 +10,13 @@ defmodule Jay_Mantri do
     process
   end
 
+  @doc "Given a post element, return the corresponding download url for the image."
   defp get_photo(post) do
     find_within_element(post, :css, "div.caption > p > a") 
       |> attribute_value("href")
   end
 
+  @doc "Given a post element, return the corresponding tags for the image."
   defp get_tags(post) do
     find_all_within_element(post, :css, "ul.tags > li:not(:first-child) > a")
       |> Enum.map(&inner_html/1)
