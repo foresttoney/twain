@@ -5,9 +5,7 @@ defmodule Jay_Mantri do
   @home "http://jaymantri.com/"
 
   def scrape do
-    Hound.start_session
-    navigate_to @home
-    process
+    process(@home)
   end
 
   @doc "Given a post element, return the corresponding download url for the image."
@@ -22,15 +20,26 @@ defmodule Jay_Mantri do
       |> Enum.map(&inner_html/1)
   end
 
-  defp process do
-    find_element(:id, "posts")
+  defp process(url) do
+    Hound.start_session
+    navigate_to(url)
+
+    photos = find_element(:id, "posts")
       |> find_all_within_element(:class, "post")
       |> Enum.map(&process_post/1)
+
+    IO.inspect photos
+
+    next_page_url = find_element(:css, ".nextPage") |> attribute_value("href")
+
+    Hound.end_session
+    process(next_page_url)
   end
 
   defp process_post(post) do 
-    photos = get_photo(post)
+    image = get_photo(post)
     tags = get_tags(post)
+    {image, tags} 
   end
 
 end
