@@ -28,6 +28,7 @@ defmodule Twain.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
+      {:credo, "~> 0.3.8", only: [:dev, :test]},
       {:hound, "~> 0.8.2"},
       {:httpoison, "~> 0.8.1"}
     ]

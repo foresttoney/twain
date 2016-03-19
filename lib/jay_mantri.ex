@@ -32,7 +32,6 @@ defmodule Jay_Mantri do
 
     next_page_url = find_element(:css, ".nextPage") |> attribute_value("href")
 
-    Hound.end_session
     process(next_page_url)
   end
 
