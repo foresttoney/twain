@@ -1,44 +1,58 @@
-defmodule Jay_Mantri do
+defmodule JayMantri do
 
-  use Hound.Helpers
+  @moduledoc """
+  """
 
-  @home "http://jaymantri.com/"
+  require IEx
+
+  @site_url "http://jaymantri.com"
+
+  def get_content(html) do
+    Floki.find(html, "#posts .post")
+  end
+
+  def get_image(html) do
+    html
+    |> Floki.find("div.caption p a")
+    |> Floki.attribute("href")
+    |> hd
+  end
+
+  def get_next_url(html) do
+    next_url = html
+    |> Floki.find(".nextPage")
+    |> Floki.attribute("href")
+
+    case next_url do
+      [url] -> combine_url(@site_url, url)
+      _     ->
+    end
+  end
+
+  def get_tags(html) do
+    html
+    |> Floki.find("ul.tags li a")
+    |> Enum.map(&Floki.text/1)
+  end
 
   def scrape do
-    process(@home)
+    process_url(@site_url)
   end
 
-  @doc "Given a post element, return the corresponding download url for the image."
-  defp get_photo(post) do
-    find_within_element(post, :css, "div.caption > p > a") 
-      |> attribute_value("href")
+  defp combine_url(site_url, url) do
+    site_url <> url
   end
 
-  @doc "Given a post element, return the corresponding tags for the image."
-  defp get_tags(post) do
-    find_all_within_element(post, :css, "ul.tags > li:not(:first-child) > a")
-      |> Enum.map(&inner_html/1)
+  defp parse(html) do
+    IO.inspect(html)
   end
 
-  defp process(url) do
-    Hound.start_session
-    navigate_to(url)
+  defp process_url(url) do
+    %HTTPoison.Response{:body => html} = HTTPoison.get!(url)
 
-    photos = find_element(:id, "posts")
-      |> find_all_within_element(:class, "post")
-      |> Enum.map(&process_post/1)
-
-    IO.inspect photos
-
-    next_page_url = find_element(:css, ".nextPage") |> attribute_value("href")
-
-    process(next_page_url)
-  end
-
-  defp process_post(post) do 
-    image = get_photo(post)
-    tags = get_tags(post)
-    {image, tags} 
+    case get_next_url(html) do
+      url -> process_url(url)
+    end
   end
 
 end

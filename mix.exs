@@ -14,7 +14,7 @@ defmodule Twain.Mixfile do
   #
   # Type "mix help compile.app" for more information
   def application do
-    [applications: [:hound, :httpoison, :logger]]
+    [applications: [:floki, :httpoison, :logger]]
   end
 
   # Dependencies can be Hex packages:
@@ -29,8 +29,9 @@ defmodule Twain.Mixfile do
   defp deps do
     [
       {:credo, "~> 0.3.8", only: [:dev, :test]},
-      {:hound, "~> 0.8.2"},
-      {:httpoison, "~> 0.8.1"}
+      {:floki, "~>0.8.0"},
+      {:httpoison, "~> 0.8.1"},
+      {:hound, "~> 0.8.0"},
     ]
   end
 end
