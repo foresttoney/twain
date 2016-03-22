@@ -2,17 +2,20 @@ defmodule JayMantri do
 
   @moduledoc """
   """
+
   @site_url "http://jaymantri.com"
 
   def get_content(html) do
     Floki.find(html, "#posts .post")
   end
 
-  def get_image(html) do
-    html
-    |> Floki.find("div.caption p a")
-    |> Floki.attribute("href")
-    |> hd
+  def get_image_url(html) do
+    with [anchor|_]          <- Floki.find(html, "div.caption p a"),
+         [href|_]            <- Floki.attribute(anchor, "href"),
+         decoded_url         <- URI.decode(href),
+         %{:query => query}  <- URI.parse(decoded_url),
+         %{"z" => image_url} <- URI.decode_query(query),
+      do: image_url
   end
 
   # TODO - Determine is this is the approperiate way to pattern match next_url
@@ -42,17 +45,26 @@ defmodule JayMantri do
   end
 
   defp parse(html) do
-    IO.inspect(html)
+    content = get_content(html)
+
+    images = content
+    |> Enum.map(&get_image_url/1)
+    |> Enum.map(&Content.get_image/1)
+
+    IO.inspect(images)
+
+    tags = get_tags(content)
   end
 
   # TODO - Determine if this is the appropriate way to pattern match process_url
   defp process_url(url) do
     %HTTPoison.Response{:body => html} = HTTPoison.get!(url)
+    parse(html)
 
-    case get_next_url(html) do
-      url when is_bitstring(url) -> process_url(url)
-      _                          -> nil
-    end
+    # case get_next_url(html) do
+    #   url when is_bitstring(url) -> process_url(url)
+    #   _                          -> nil
+    # end
   end
 
 end

@@ -26,10 +26,10 @@ defmodule JayMantriTest do
     assert Enum.empty?(tags) === false
   end
 
-  test "content has an image", context do
+  test "content has an image url", context do
     [head|_] = context[:content]
-    image = JayMantri.get_image(head)
-    assert is_bitstring(image) === true
+    image_url = JayMantri.get_image_url(head)
+    assert is_bitstring(image_url) === true
   end
 
   test "has next page", context do
