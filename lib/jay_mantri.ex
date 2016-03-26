@@ -4,35 +4,32 @@ defmodule Twain.JayMantri do
   Scrape [`Jay Mantri`](http://jaymantri.com/) for all images and corresponding tags.
   """
 
-  @type html :: String.t
-  @type url  :: String.t
+  @type html  :: String.t
+  @type state :: {[], String.t | nil}
+  @type url   :: String.t
 
   @url "http://jaymantri.com"
 
+  @doc """
+  Returns a stream of parsed content.
+  """
   def scrape do
-    stream = Stream.resource(
-      fn        -> start(@url) end,
-      fn(state) -> process(state) end,
-      fn        -> {:complete} end
+    Stream.resource(
+      fn -> get_state(@url) end,
+      &process/1,
+      fn(_state) -> end
     )
-
-    Stream.run(stream)
   end
 
-  @spec get_content(html) :: Floki.html_tree
-  defp get_content(html) do
+  @spec get_contents(html) :: Floki.html_tree
+  defp get_contents(html) do
     Floki.find(html, "#posts .post")
   end
 
-  @spec get_full_url(url, String.t) :: url
-  defp get_full_url(url, file_path) do
-    url <> file_path
-  end
-
   @spec get_image_url(Floki.html_tree) :: url
-  def get_image_url(content) do
-    with [a]                 <- Floki.find(content, "div.caption p a"),
-         [href]              <- Floki.attribute(a, "href"),
+  defp get_image_url(content) do
+    with [a | _]             <- Floki.find(content, "div.caption p a"),
+         [href | _]          <- Floki.attribute(a, "href"),
          decoded_url          = URI.decode(href),
          %{:query => query}  <- URI.parse(decoded_url),
          %{"z" => image_url} <- URI.decode_query(query),
@@ -46,9 +43,17 @@ defmodule Twain.JayMantri do
     |> Floki.attribute("href")
 
     case next_page_url do
-      [file_path] -> get_full_url(@url, file_path)
-      _           -> nil
+      [file_path | _] -> @url <> file_path
+      _               -> nil
     end
+  end
+
+  @spec get_state(url) :: state
+  defp get_state(url) do
+    %{:body => html} = HTTPoison.get!(url)
+    contents = get_contents(html)
+    next_page_url = get_next_page_url(html)
+    {contents, next_page_url}
   end
 
   @spec get_tags(Floki.html_tree) :: [String.t]
@@ -58,20 +63,27 @@ defmodule Twain.JayMantri do
     |> Enum.map(&Floki.text/1)
   end
 
-  # defp parse(content) do
-  #   tags = Enum.map(content, &get_tags/1)
-  # end
-
-  defp process(state) do
-    {:halt, nil}
+  defp parse(content) do
+    IO.inspect(content)
   end
 
-  @spec start(url) :: {Floki.html_tree, url|nil}
-  defp start(url) do
-    %{:body => html} = HTTPoison.get!(@url)
-    content = get_content(html)
-    next_page_url = get_next_page_url(html)
-    {content, next_page_url}
+  defp process(state = {[], nil}) do
+    {:halt, state}
+  end
+
+  defp process({[], next_page_url}) do
+    state = get_state(next_page_url)
+    state_reducer(state)
+  end
+
+  defp process(state) do
+    state_reducer(state)
+  end
+
+  @spec state_reducer(state) :: {[], state}
+  defp state_reducer({[content|contents], next_page_url}) do
+    new_state = {contents, next_page_url}
+    {[content], new_state}
   end
 
 end
