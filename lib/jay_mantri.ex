@@ -64,9 +64,12 @@ defmodule Twain.JayMantri do
   end
 
   defp parse(content) do
-    IO.inspect(content)
+    image = get_image_url(content)
+    tags = get_tags(content)
+    %{image: image, tags: tags}
   end
 
+  @spec process(state) :: {:halt | [], state}
   defp process(state = {[], nil}) do
     {:halt, state}
   end
@@ -83,7 +86,8 @@ defmodule Twain.JayMantri do
   @spec state_reducer(state) :: {[], state}
   defp state_reducer({[content|contents], next_page_url}) do
     new_state = {contents, next_page_url}
-    {[content], new_state}
+    parsed_content = parse(content)
+    {[parsed_content], new_state}
   end
 
 end
