@@ -43,7 +43,7 @@ defmodule Twain.JayMantri do
     |> Floki.attribute("href")
 
     case next_page_url do
-      [file_path | _] -> @url <> file_path
+      [file_path | _] -> @url <> file_path;
       _               -> nil
     end
   end
